@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
 });
 
 // Function to connect to Deepgram Voice Agent
-async function connectToAgent() {
+async function connectToAgent(browserWs: WebSocket) {
   try {
     // Create an agent connection
     const agent = deepgram.agent();
@@ -44,65 +44,80 @@ async function connectToAgent() {
       console.log('Agent connection established');
     });
 
+    // Forward Welcome message to browser
+    // Browser should then send Settings message to configure the agent
     agent.on('Welcome', (data) => {
-      console.log('Server welcome message:', data);
-      agent.configure({
-        audio: {
-          input: {
-            encoding: 'linear16',
-            sample_rate: 24000
-          },
-          output: {
-            encoding: 'linear16',
-            sample_rate: 24000,
-            container: 'none'
-          }
-        },
-        agent: {
-          listen: {
-            provider: {
-              type: 'deepgram',
-              model: 'nova-3'
-            }
-          },
-          think: {
-            provider: {
-              type: 'open_ai',
-              model: 'gpt-4o-mini'
-            },
-            prompt: `You are a helpful voice assistant created by Deepgram. Your responses should be friendly, human-like, and conversational. Always keep your answers concise, limited to 1-2 sentences and no more than 120 characters.
+      console.log('Deepgram welcome message received:', data);
 
-When responding to a user's message, follow these guidelines:
-- If the user's message is empty, respond with an empty message.
-- Ask follow-up questions to engage the user, but only one question at a time.
-- Keep your responses unique and avoid repetition.
-- If a question is unclear or ambiguous, ask for clarification before answering.
-- If asked about your well-being, provide a brief response about how you're feeling.
+      // Forward Welcome to browser
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'Welcome',
+          ...data
+        }));
+      }
 
-Remember that you have a voice interface. You can listen and speak, and all your responses will be spoken aloud.`
-          },
-          speak: {
-            provider: {
-              type: 'deepgram',
-              model: 'aura-2-thalia-en'
-            }
-          },
-          greeting: "Hello! How can I help you today?"
-        }
-      });
+      // Note: Browser must now send Settings message to configure the agent
+      console.log('Waiting for Settings message from browser...');
     });
 
+    // Forward SettingsApplied message to browser
     agent.on('SettingsApplied', (data) => {
-      console.log('Server confirmed settings:', data);
+      console.log('Deepgram settings applied:', data);
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'SettingsApplied',
+          ...data
+        }));
+      }
+    });
+
+    // Forward UserStartedSpeaking to browser
+    agent.on(AgentEvents.UserStartedSpeaking, (data: any) => {
+      console.log('User started speaking');
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'UserStartedSpeaking',
+          ...data
+        }));
+      }
+    });
+
+    // Forward AgentThinking to browser
+    agent.on(AgentEvents.AgentThinking, (data: any) => {
+      console.log('Agent thinking');
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'AgentThinking',
+          ...data
+        }));
+      }
+    });
+
+    // Forward AgentAudioDone to browser
+    agent.on(AgentEvents.AgentAudioDone, (data: any) => {
+      console.log('Agent audio done');
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'AgentAudioDone',
+          ...data
+        }));
+      }
     });
 
     agent.on(AgentEvents.AgentStartedSpeaking, (data: { total_latency: number }) => {
-      // Remove unnecessary latency logging
+      console.log('Agent started speaking');
     });
 
+    // Forward ConversationText to browser
     agent.on(AgentEvents.ConversationText, (message: { role: string; content: string }) => {
-      // Only log the conversation text for debugging
       console.log(`${message.role}: ${message.content}`);
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'ConversationText',
+          ...message
+        }));
+      }
     });
 
     agent.on(AgentEvents.Audio, (audio: Buffer) => {
@@ -116,8 +131,43 @@ Remember that you have a voice interface. You can listen and speak, and all your
       }
     });
 
-    agent.on(AgentEvents.Error, (error: Error) => {
-      console.error('Agent error:', error);
+    // Forward Error to browser
+    agent.on(AgentEvents.Error, (error: any) => {
+      // Ignore race condition errors when browser already disconnected
+      const isDisconnectRaceCondition =
+        error.message === 'WebSocket was closed before the connection was established' &&
+        browserWs?.readyState !== WebSocket.OPEN;
+
+      if (isDisconnectRaceCondition) {
+        // This is expected when tests disconnect quickly before Deepgram connects
+        return;
+      }
+
+      console.error('Agent error received from Deepgram:', {
+        message: error.message || error.description,
+        code: error.code,
+        type: error.type
+      });
+
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'Error',
+          description: error.description || error.message || 'An error occurred',
+          code: error.code || error.type || 'UNKNOWN_ERROR'
+        }));
+      }
+    });
+
+    // Forward Warning to browser
+    agent.on('Warning', (warning: any) => {
+      console.warn('Agent warning:', warning);
+      if (browserWs?.readyState === WebSocket.OPEN) {
+        browserWs.send(JSON.stringify({
+          type: 'Warning',
+          description: warning.message || 'A warning occurred',
+          code: warning.code || 'UNKNOWN_WARNING'
+        }));
+      }
     });
 
     agent.on(AgentEvents.Close, () => {
@@ -134,32 +184,56 @@ Remember that you have a voice interface. You can listen and speak, and all your
   }
 }
 
-// Create WebSocket server for browser clients
-const wss = new WebSocket.Server({ server });
-let browserWs: WebSocket | null = null;
+// Create WebSocket server for browser clients on /agent/converse path
+const wss = new WebSocket.Server({
+  server,
+  path: '/agent/converse'
+});
 
 wss.on('connection', async (ws) => {
-  // Only log critical connection events
   console.log('Browser client connected');
-  browserWs = ws;
 
-  const agent = await connectToAgent();
+  // Immediately connect to Deepgram Agent API
+  // Pass the WebSocket so agent handlers can send to THIS specific client
+  const agent = await connectToAgent(ws);
 
-  ws.on('message', (data: Buffer) => {
+  // Forward messages from browser to Deepgram agent
+  ws.on('message', (data: any) => {
     try {
-      if (agent) {
-        agent.send(data);
+      if (!agent) return;
+
+      // Try to parse as JSON (for Settings messages)
+      try {
+        const message = JSON.parse(data.toString());
+
+        if (message.type === 'Settings') {
+          // Forward Settings message using configure()
+          console.log('Forwarding Settings to Deepgram:', message);
+          agent.configure(message);
+          return;
+        }
+      } catch (parseError) {
+        // Not JSON, treat as audio data
       }
+
+      // Forward audio data using send()
+      agent.send(data);
     } catch (error) {
-      console.error('Error sending audio to agent:', error);
+      console.error('Error forwarding message to agent:', error);
     }
   });
 
   ws.on('close', async () => {
     if (agent) {
-      await agent.disconnect();
+      try {
+        // Try to disconnect, but handle race condition if connection isn't fully established
+        await agent.disconnect();
+      } catch (error) {
+        // Ignore "WebSocket was closed before the connection was established" errors
+        // This happens when the browser disconnects before Deepgram connection completes
+        console.log('Agent disconnect handled (may not have been fully connected)');
+      }
     }
-    browserWs = null;
     console.log('Browser client disconnected');
   });
 
