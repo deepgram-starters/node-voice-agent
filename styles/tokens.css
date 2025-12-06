@@ -1,0 +1,125 @@
+/* Orbi Design System Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600&display=swap');
+
+:root {
+  /* === COLORS === */
+  --orb-core: #00D4E8;
+  --orb-deep: #0A1628;
+  --orb-halo: #7EE8FA;
+  --surface-lavender: #E8D5F0;
+  --surface-rose: #F5D0E0;
+  --surface-cream: #FFF8F0;
+  --glass-white: #FFFFFF;
+  --text-primary: #1A1A2E;
+  --text-secondary: #6B6B8D;
+  --text-muted: #9B9BB0;
+  --accent-pink: #FF8FAB;
+  --accent-purple: #C490E4;
+  --accent-orange: #FFB366;
+  --accent-blue: #7EB8FF;
+  --success: #7ED9A6;
+  --voice-active: #00E5CC;
+  --error: #FF7B7B;
+
+  /* === TYPOGRAPHY === */
+  --font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 2rem;      /* 32px */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* === SPACING === */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* === RADII === */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 2px 8px rgba(31, 38, 135, 0.08);
+  --shadow-md: 0 8px 32px rgba(31, 38, 135, 0.12);
+  --shadow-lg: 0 16px 48px rgba(31, 38, 135, 0.18);
+  --shadow-glow-cyan: 0 0 40px rgba(0, 212, 232, 0.4);
+  --shadow-glow-soft: 0 0 60px rgba(126, 232, 250, 0.3);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* === GLASS === */
+  --glass-blur: 20px;
+  --glass-blur-light: 12px;
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.4);
+
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === Z-INDEX === */
+  --z-base: 0;
+  --z-panels: 10;
+  --z-orb: 50;
+  --z-modal: 100;
+  --z-voice-widget: 200;
+  --z-tooltip: 300;
+}
+
+/* Ambient Background */
+.ambient-bg {
+  background: linear-gradient(
+    135deg,
+    var(--surface-lavender) 0%,
+    var(--surface-rose) 35%,
+    var(--surface-cream) 70%,
+    var(--surface-lavender) 100%
+  );
+  background-size: 400% 400%;
+  animation: ambientShift 20s ease infinite;
+}
+
+@keyframes ambientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glass Panel Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-inset-top);
+  pointer-events: none;
+}
