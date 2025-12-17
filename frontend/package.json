@@ -1,0 +1,35 @@
+{
+  "name": "@deepgram/node-voice-agent-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Deepgram Voice Agent",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "deepgram",
+    "voice-agent",
+    "html",
+    "javascript",
+    "css"
+  ],
+  "author": "Deepgram Starter UIs Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepgram-starters/node-voice-agent.git",
+    "directory": "frontend"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "@deepgram/styles": "latest"
+  },
+  "devDependencies": {
+    "vite": "^7.2.2"
+  }
+}

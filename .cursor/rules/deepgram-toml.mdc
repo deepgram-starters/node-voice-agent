@@ -28,9 +28,9 @@ sdk = "3.8.12"                            # OPTIONAL: Deepgram SDK version (omit
 - `STT` - Speech-to-Text / Transcription
 - `TTS` - Text-to-Speech / Audio AI
 - `Agent` - Voice Agent applications
-- `TextIntel` - Text Intelligence / Analyze API
-- `Live-STT` - Live streaming transcription
-- `Live-TTS` - Live streaming text-to-speech
+- `Text Intel` - Text Intelligence / Analyze API
+- `Live STT` - Live streaming transcription
+- `Live TTS` - Live streaming text-to-speech
 
 ### Installation and Build Steps
 

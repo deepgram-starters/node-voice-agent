@@ -4,6 +4,32 @@ We welcome contributions! Before adding new functionality, open an issue first. 
 
 Please take the time to review the [Code of Conduct](CODE_OF_CONDUCT.md), which all contributors are subject to on this project.
 
+## Prerequisites
+
+**Required:**
+- **Node.js 24.0.0+**
+- **pnpm 10.0.0+** (npm and yarn will NOT work due to security configurations)
+
+**Installation:**
+```bash
+# Install pnpm globally if not already installed
+npm install -g pnpm@10.0.0
+
+# Install all dependencies (recommended)
+pnpm run install:all
+
+# Or install manually in two steps:
+pnpm install                           # Install root dependencies
+pnpm run install:frontend              # Install frontend dependencies
+```
+
+**Important:** This project uses strict security measures:
+- All lifecycle scripts are disabled (`ignore-scripts=true`)
+- Dependencies are pinned to exact versions
+- Using npm or yarn will fail intentionally
+- Frontend must be installed separately due to blocked postinstall scripts
+- Use `install:all` helper script for convenience
+
 ## Reporting Bugs
 
 Before submitting a bug report:
@@ -39,9 +65,22 @@ Check `beginner` and `help-wanted` issues to get started.
 Please follow these steps:
 1. Use the Pull Request template
 2. Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
-3. Ensure all [status checks](https://help.github.com/articles/about-status-checks/) pass before review
+3. Run security checks locally before submitting:
+
+   ```bash
+   pnpm run security-check:all
+   ```
+
+4. Ensure all [status checks](https://help.github.com/articles/about-status-checks/) pass before review
+   - Security scanning (if configured) must pass
+   - All dependencies must be pinned to exact versions
+   - Lockfile changes must be committed if dependencies updated
 
 Note: Reviewers may request additional changes before merging.
+
+## Security Scanning
+
+Pull requests with dependency updates should be scanned for security vulnerabilities using Snyk. Review the [Security Policy](SECURITY.md) for detailed information about our security practices.
 
 ## Questions?
 

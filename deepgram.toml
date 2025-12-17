@@ -3,16 +3,21 @@ title = "Node Voice Agent Starter"
 description = "Get started using Deepgram's Voice Agent with this Node demo app"
 author = "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)"
 useCase = "Voice Agent"
-language = "TypeScript"
+language = "JavaScript"
 framework = "Node"
-sdk = "latest"
+sdk = "4.11.2"
+
+[pre-build]
+command = "pnpm run install:all"
+message = "Dependencies installed (root + frontend)"
 
 [build]
-command = "npm install"
+command = "pnpm build"
+message = "Build completed"
 
-[config]
+[build.config]
 sample = "sample.env"
 output = ".env"
 
 [post-build]
-message = "Run `npm start` to start the server."
+message = "Run `pnpm start` to get up and running."

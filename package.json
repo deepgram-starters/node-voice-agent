@@ -1,33 +1,58 @@
 {
-  "name": "voice-agent",
+  "name": "@deepgram/node-voice-agent",
   "version": "1.0.0",
   "description": "A Node.js starter application for Deepgram's Voice Agent API",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "server.js",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
   "scripts": {
-    "build": "tsc",
-    "start": "ts-node src/index.ts",
-    "test": "jest",
-    "dev": "ts-node-dev --respawn src/index.ts"
+    "install:all": "pnpm install && cd frontend && pnpm install && cd ..",
+    "install:frontend": "cd frontend && pnpm install && cd ..",
+    "build": "cd frontend && pnpm run build",
+    "start": "node --no-deprecation server.js",
+    "dev": "npm-run-all --parallel dev:backend dev:frontend",
+    "dev:backend": "NODE_ENV=development nodemon --no-deprecation server.js",
+    "dev:frontend": "cd frontend && pnpm run dev -- --no-open --logLevel error",
+    "security-check": "snyk test --severity-threshold=low --package-manager=pnpm --fail-on=all",
+    "security-check:all": "pnpm run security-check && cd frontend && pnpm run security-check && cd .."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepgram-starters/node-voice-agent.git"
   },
   "keywords": [
-    "deepgram",
     "voice-agent",
-    "typescript"
+    "deepgram",
+    "streaming",
+    "voice-agent"
   ],
-  "author": "",
+  "author": "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)",
   "license": "MIT",
   "dependencies": {
-    "@deepgram/sdk": "^4.0.1",
-    "dotenv": "^16.3.1",
-    "ws": "^8.14.2"
+    "@deepgram/sdk": "4.11.2",
+    "dotenv": "16.3.1",
+    "express": "5.2.1",
+    "http-proxy-middleware": "3.0.5",
+    "npm-run-all": "4.1.5",
+    "ws": "8.14.2"
   },
   "devDependencies": {
-    "@types/node": "^20.8.2",
-    "@types/ws": "^8.5.6",
-    "typescript": "^5.2.2",
-    "ts-node": "^10.9.1",
-    "jest": "^29.7.0",
-    "@types/jest": "^29.5.5",
-    "ts-jest": "^29.1.1"
+    "nodemon": "3.1.10"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

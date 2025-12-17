@@ -1,98 +1,83 @@
 # Node Voice Agent Starter
 
-Start building interactive voice experiences with Deepgram's Voice Agent API using this Node.js starter application. This project demonstrates how to create a voice agent that can engage in natural conversations using Deepgram's advanced AI capabilities.
-
-## What is Deepgram?
-
-[Deepgram's](https://deepgram.com/) voice AI platform provides APIs for speech-to-text, text-to-speech, and full speech-to-speech voice agents. Over 200,000+ developers use Deepgram to build voice AI products and features.
+Voice Agent Demo using Deepgram's API with Node.js backend and web frontend.
 
 ## Prerequisites
 
-Before you begin, ensure you have:
-- Node.js 18 or higher installed
-- npm (comes with Node.js)
-- A Deepgram API key (see below)
-- Audio files in supported formats (WAV, MP3, M4A, or FLAC)
+- [Deepgram API Key](https://console.deepgram.com/signup?jump=keys) (sign up for free)
+- Node.js 24.0.0+
+- pnpm 10.0.0+
+
+**Note:** This project uses strict supply chain security measures. npm and yarn will NOT work. See [SECURITY.md](SECURITY.md) for details.
 
 ## Quickstart
 
-Follow these steps to get started with this starter application.
-
-### Clone the repository
-
-Go to GitHub and [clone the repository](https://github.com/deepgram-starters/node-voice-agent).
-
-### Install dependencies
-
-Install the project dependencies:
+1. **Install dependencies**
 
 ```bash
-npm install
+# Option 1: Use the helper script (recommended)
+pnpm run install:all
+
+# Option 2: Manual two-step install
+pnpm install
+cd frontend && pnpm install && cd ..
 ```
 
-### Create a `.env` config file
+**Note:** Due to security settings (`ignore-scripts=true`), frontend dependencies must be installed separately. The `install:all` script handles both steps. See [SECURITY.md](SECURITY.md) for details.
 
-Copy the code from `sample.env` and create a new file called `.env`. Paste in the code and enter your API key you generated in the [Deepgram Console](https://console.deepgram.com/).
+3. **Set your API key**
 
-```
-DEEPGRAM_API_KEY=your_deepgram_api_key_here
-```
-
-### Run the application
-
-Start the server with:
+Create a `.env` file:
 
 ```bash
-npm start
+DEEPGRAM_API_KEY=your_api_key_here
 ```
 
-Then open your browser and go to:
+4. **Run the app**
 
-```
-http://localhost:3000
-```
-
-- Allow microphone access when prompted.
-- Speak into your microphone to interact with the Deepgram Voice Agent.
-- You should hear the agent's responses played back in your browser.
-
-## Using Cursor & MDC Rules
-
-This application can be modify as needed by using the [app-requirements.mdc](.cursor/rules/app-requirements.mdc) file. This file allows you to specify various settings and parameters for the application in a structured format that can be use along with [Cursor's](https://www.cursor.com/) AI Powered Code Editor.
-
-### Using the `app-requirements.mdc` File
-
-1. Clone or Fork this repo.
-2. Modify the `app-requirements.mdc`
-3. Add the necessary configuration settings in the file.
-4. You can refer to the MDC file used to help build this starter application by reviewing  [app-requirements.mdc](.cursor/rules/app-requirements.mdc)
-
-## Testing
-
-Test the application with:
+**Development mode** (with hot reload):
 
 ```bash
-npm run test
+pnpm dev
 ```
+
+**Production mode** (build and serve):
+
+```bash
+pnpm build
+pnpm start
+```
+
+### 🌐 Open the App
+
+[http://localhost:3000](http://localhost:3000)
+
+## How It Works
+
+- Establishes a WebSocket connection to `/agent/converse` endpoint
+- Proxies bidirectional communication between your browser and Deepgram's Agent API
+- Captures microphone audio and streams it to the voice agent
+- Receives and plays back the agent's audio responses
+- Displays real-time conversation transcripts showing both user and agent messages
 
 ## Getting Help
 
-- Join our [Discord community](https://discord.gg/deepgram) for support
-- Found a bug? [Create an issue](https://github.com/deepgram-starters/node-voice-agent/issues)
-- Have a feature request? [Submit it here](https://github.com/deepgram-starters/node-voice-agent/issues)
+- [Open an issue in this repository](https://github.com/deepgram-starters/node-voice-agent/issues/new)
+- [Join the Deepgram Github Discussions Community](https://github.com/orgs/deepgram/discussions)
+- [Join the Deepgram Discord Community](https://discord.gg/xWRaCDBtW4)
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-## Security
-
-For security concerns, please review our [Security Policy](SECURITY.md).
+See our [Contributing Guidelines](./CONTRIBUTING.md) to learn about contributing to this project.
 
 ## Code of Conduct
 
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project follows the [Deepgram Code of Conduct](./CODE_OF_CONDUCT.md).
+
+## Security
+
+For security policy and procedures, see our [Security Policy](./SECURITY.md).
 
 ## License
 
-This project is licensed under the terms specified in [LICENSE](LICENSE).
+MIT - See [LICENSE](./LICENSE)
