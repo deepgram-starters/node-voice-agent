@@ -138,10 +138,19 @@ async function playNextInQueue() {
 }
 
 // Start audio streaming to server
-function startStreaming() {
+async function startStreaming() {
   if (!mediaStream || !isConnected) return;
 
   try {
+    // Resume AudioContext if suspended (especially important for Firefox)
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+      if (isFirefox) {
+        // Give Firefox a moment to fully initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+
     const source = audioContext.createMediaStreamSource(mediaStream);
 
     // Create audio processor
@@ -198,8 +207,14 @@ async function connect() {
   try {
     updateStatus('connecting', 'CONNECTING');
 
-    // Create audio context early with explicit sample rate
-    audioContext = new AudioContext({ sampleRate: 24000 });
+    // Create audio context
+    // Firefox: Use native sample rate to avoid mismatch error
+    // Chrome/Safari: Use 24000 Hz
+    if (isFirefox) {
+      audioContext = new AudioContext(); // Let Firefox use hardware native rate
+    } else {
+      audioContext = new AudioContext({ sampleRate: 24000 });
+    }
 
     // Browser-specific audio constraints
     let audioConstraints;
@@ -207,25 +222,18 @@ async function connect() {
     if (isFirefox) {
       // Firefox ignores most constraints, use minimal approach
       audioConstraints = {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
-        // Firefox ignores sampleRate, channelCount, and other advanced constraints
+        echoCancellation: true, // set to true for desktop microphones also works with headsets
+        noiseSuppression: false, // firefox ignores this
       };
     } else {
       // Chrome/Edge/Safari: Full constraints with Google-specific options
       audioConstraints = {
         channelCount: 1,
         sampleRate: 24000,
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
+        echoCancellation: true, // set to true for desktop microphones also works with headsets
+        noiseSuppression: true, // set to true for desktop microphones also works with headsets
+        autoGainControl: true, // set to true for desktop microphones also works with headsets
         latency: 0,
-        // Advanced Chrome/Edge constraints for better audio control
-        googEchoCancellation: false,
-        googAutoGainControl: false,
-        googNoiseSuppression: false,
-        googHighpassFilter: true
       };
     }
 
@@ -234,10 +242,6 @@ async function connect() {
     };
 
     mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-    if (isFirefox) {
-      console.log('Firefox detected: Using minimal audio constraints');
-    }
 
     updateStatus('connecting', 'CONNECTING');
 
@@ -296,11 +300,11 @@ async function connect() {
               audio: {
                 input: {
                   encoding: 'linear16',
-                  sample_rate: 24000
+                  sample_rate: audioContext.sampleRate // Use actual AudioContext rate
                 },
                 output: {
                   encoding: 'linear16',
-                  sample_rate: 24000,
+                  sample_rate: 24000, // Keep output at 24000 for all browsers
                   container: 'none'
                 }
               },
