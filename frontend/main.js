@@ -209,27 +209,26 @@ async function connect() {
 
     // Create audio context
     // Firefox: Use native sample rate to avoid mismatch error
-    // Chrome/Safari: Use 24000 Hz
+    // Chrome/Safari: Use 16000 Hz for microphone input
     if (isFirefox) {
       audioContext = new AudioContext(); // Let Firefox use hardware native rate
     } else {
-      audioContext = new AudioContext({ sampleRate: 24000 });
+      audioContext = new AudioContext({ sampleRate: 16000 });
     }
 
     // Browser-specific audio constraints
     let audioConstraints;
 
     if (isFirefox) {
-      // Firefox ignores most constraints, use minimal approach
       audioConstraints = {
+        channelCount: 1, // Force 1 channel for microphone input, mono recommended for better audio quality (not guaranteed in Firefox)
         echoCancellation: true, // set to true for desktop microphones also works with headsets
         noiseSuppression: false, // firefox ignores this
       };
     } else {
       // Chrome/Edge/Safari: Full constraints with Google-specific options
       audioConstraints = {
-        channelCount: 1,
-        sampleRate: 24000,
+        channelCount: 1, // Force 1 channel for microphone input, mono recommended for better audio quality
         echoCancellation: true, // set to true for desktop microphones also works with headsets
         noiseSuppression: true, // set to true for desktop microphones also works with headsets
       };
