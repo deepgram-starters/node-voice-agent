@@ -383,7 +383,7 @@ async function connect() {
                 output: {
                   encoding: 'linear16',
                   sample_rate: 24000, // Keep output at 24000 for all browsers
-                  container: 'none'
+                  container: 'none' // Request raw PCM without container/headers for manual audio processing
                 }
               },
               agent: {
