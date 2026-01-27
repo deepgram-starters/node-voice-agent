@@ -6,6 +6,7 @@ useCase = "Voice Agent"
 language = "JavaScript"
 framework = "Node"
 sdk = "4.11.2"
+repository = "https://github.com/deepgram-starters/node-voice-agent"
 
 [pre-build]
 command = "pnpm run install:all"
