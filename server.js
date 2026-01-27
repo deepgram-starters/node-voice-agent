@@ -41,6 +41,10 @@ if (!CONFIG.deepgramApiKey) {
 const app = express();
 app.use(express.json());
 
+// ============================================================================
+// API ROUTES
+// ============================================================================
+
 // Metadata endpoint - returns info from deepgram.toml
 app.get('/metadata', (req, res) => {
   try {
@@ -65,26 +69,74 @@ app.get('/metadata', (req, res) => {
   }
 });
 
-// Development: Proxy to Vite dev server
-// Production: Serve static files
+// Create HTTP server BEFORE setting up routes
+// This allows us to intercept WebSocket upgrades at the server level
+const server = createServer(app);
+
+// ============================================================================
+// FRONTEND SERVING (Development vs Production Pattern)
+// ============================================================================
+//
+// This pattern allows framework-agnostic frontend/backend integration:
+//
+// DEVELOPMENT MODE (NODE_ENV=development):
+//   - Vite dev server runs independently on port 5173 (or VITE_PORT)
+//   - Backend proxies ALL requests to Vite for HMR and fast refresh
+//   - Vite proxies API routes (/agent, /metadata) back to backend
+//   - User accesses: http://localhost:8080
+//   - Flow: User → :8080 (Backend) → :5173 (Vite) → [API requests back to :8080]
+//
+// PRODUCTION MODE (NODE_ENV=production or default):
+//   - Frontend is pre-built (npm run build) to frontend/dist
+//   - Backend serves static files directly from frontend/dist
+//   - Backend handles API routes directly
+//   - User accesses: http://localhost:8080
+//   - Flow: User → :8080 (Backend serves static + APIs)
+//
+// REPLICATION FOR OTHER FRAMEWORKS:
+//   Flask:     Use flask.send_from_directory() for static, requests.get() for proxy
+//   Django:    Use django.views.static.serve() for static, HttpResponse(requests.get()) for proxy
+//   Go:        Use http.FileServer() for static, httputil.NewSingleHostReverseProxy() for proxy
+//   .NET:      Use app.UseStaticFiles() for static, app.UseProxy() for proxy
+//
+// ============================================================================
+
 if (CONFIG.isDevelopment) {
   console.log(`Development mode: Proxying to Vite dev server on port ${CONFIG.vitePort}`);
-  app.use(
-    '/',
-    createProxyMiddleware({
-      target: `http://localhost:${CONFIG.vitePort}`,
-      changeOrigin: true,
-      ws: true, // Enable WebSocket proxying for Vite HMR
-    })
-  );
+
+  // Create proxy middleware for HTTP requests only (no WebSocket)
+  const viteProxy = createProxyMiddleware({
+    target: `http://localhost:${CONFIG.vitePort}`,
+    changeOrigin: true,
+    ws: false, // Disable automatic WebSocket proxying - we'll handle it manually
+  });
+
+  app.use('/', viteProxy);
+
+  // Manually handle WebSocket upgrades at the server level
+  // This allows us to selectively proxy based on path
+  server.on('upgrade', (request, socket, head) => {
+    const pathname = new URL(request.url, 'http://localhost').pathname;
+
+    console.log(`WebSocket upgrade request for: ${pathname}`);
+
+    // Backend handles /agent WebSocket connections directly
+    // The WebSocketServer below will handle these
+    if (pathname.startsWith('/agent')) {
+      console.log('Backend handling /agent WebSocket');
+      // Don't do anything - let the WebSocketServer handle it
+      return;
+    }
+
+    // Forward all other WebSocket connections (Vite HMR) to Vite
+    console.log('Proxying WebSocket to Vite');
+    viteProxy.upgrade(request, socket, head);
+  });
 } else {
   console.log('Production mode: Serving static files from frontend/dist');
   const distPath = path.join(__dirname, 'frontend', 'dist');
   app.use(express.static(distPath));
 }
-
-// Create HTTP server
-const server = createServer(app);
 
 // Create WebSocket server for agent endpoint
 const wss = new WebSocketServer({
@@ -113,6 +165,7 @@ wss.on('connection', async (clientWs, request) => {
 
     // Create raw WebSocket connection to Deepgram Agent API
     // Send API key via Authorization header
+    console.log('Initiating Deepgram connection...');
     const deepgramWs = new WebSocket(CONFIG.deepgramAgentUrl, {
       headers: {
         'Authorization': `Token ${apiKey}`
@@ -121,7 +174,7 @@ wss.on('connection', async (clientWs, request) => {
 
     // Forward all messages from Deepgram to client
     deepgramWs.on('open', () => {
-      console.log('Connected to Deepgram Agent API');
+      console.log('✓ Connected to Deepgram Agent API');
     });
 
     deepgramWs.on('message', (data, isBinary) => {
