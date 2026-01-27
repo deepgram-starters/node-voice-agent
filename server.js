@@ -165,6 +165,7 @@ wss.on('connection', async (clientWs, request) => {
 
     // Create raw WebSocket connection to Deepgram Agent API
     // Send API key via Authorization header
+    console.log('Initiating Deepgram connection...');
     const deepgramWs = new WebSocket(CONFIG.deepgramAgentUrl, {
       headers: {
         'Authorization': `Token ${apiKey}`
@@ -173,7 +174,7 @@ wss.on('connection', async (clientWs, request) => {
 
     // Forward all messages from Deepgram to client
     deepgramWs.on('open', () => {
-      console.log('Connected to Deepgram Agent API');
+      console.log('✓ Connected to Deepgram Agent API');
     });
 
     deepgramWs.on('message', (data, isBinary) => {
