@@ -68,6 +68,12 @@ const elements = {
   messagesReceived: null,
   audioChunks: null,
   sessionDuration: null,
+
+  // Metadata elements
+  pageTitle: null,
+  pageDescription: null,
+  headerTitle: null,
+  repoLink: null,
 };
 
 // ============================================================================
@@ -77,6 +83,7 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
   initializeElements();
   initializeEventListeners();
+  loadMetadata();
   updateSessionDuration();
 });
 
@@ -106,6 +113,12 @@ function initializeElements() {
   elements.messagesReceived = document.getElementById('messagesReceived');
   elements.audioChunks = document.getElementById('audioChunks');
   elements.sessionDuration = document.getElementById('sessionDuration');
+
+  // Metadata
+  elements.pageTitle = document.getElementById('pageTitle');
+  elements.pageDescription = document.getElementById('pageDescription');
+  elements.headerTitle = document.getElementById('headerTitle');
+  elements.repoLink = document.getElementById('repoLink');
 }
 
 function initializeEventListeners() {
@@ -118,10 +131,8 @@ function initializeEventListeners() {
   // Update settings button
   elements.updateSettingsBtn.addEventListener('click', updateSettings);
 
-  // Track changes in config inputs
-  elements.listenModel.addEventListener('change', onConfigChange);
+  // Track changes in updateable config inputs (speak and prompt only)
   elements.speakModel.addEventListener('change', onConfigChange);
-  elements.thinkModel.addEventListener('change', onConfigChange);
   elements.systemPrompt.addEventListener('input', onConfigChange);
 
   // Send message
@@ -137,21 +148,66 @@ function initializeEventListeners() {
 }
 
 // ============================================================================
+// METADATA LOADING
+// ============================================================================
+
+async function loadMetadata() {
+  try {
+    const response = await fetch('/metadata');
+    if (!response.ok) {
+      console.warn('Failed to load metadata, using defaults');
+      return;
+    }
+
+    const metadata = await response.json();
+
+    // Update page title
+    if (metadata.title && elements.pageTitle) {
+      elements.pageTitle.textContent = metadata.title;
+    }
+
+    // Update page description
+    if (metadata.description && elements.pageDescription) {
+      elements.pageDescription.setAttribute('content', metadata.description);
+    }
+
+    // Update header title
+    if (metadata.title && elements.headerTitle) {
+      elements.headerTitle.textContent = metadata.title;
+    }
+
+    // Update repository link
+    if (metadata.repository && elements.repoLink) {
+      elements.repoLink.href = metadata.repository;
+    }
+
+    console.log('Metadata loaded:', metadata);
+  } catch (error) {
+    console.warn('Error loading metadata, using defaults:', error);
+  }
+}
+
+// ============================================================================
 // CONFIGURATION CHANGE TRACKING
 // ============================================================================
 
 function onConfigChange() {
   if (!state.isConnected || !state.originalConfig) return;
 
-  // Check if any values have changed
+  // Only check updateable settings (speak model and system prompt)
   const hasChanges =
-    elements.listenModel.value !== state.originalConfig.listenModel ||
     elements.speakModel.value !== state.originalConfig.speakModel ||
-    elements.thinkModel.value !== state.originalConfig.thinkModel ||
     elements.systemPrompt.value !== state.originalConfig.systemPrompt;
 
   state.hasUnsavedChanges = hasChanges;
   elements.updateSettingsBtn.disabled = !hasChanges;
+
+  // Toggle visibility based on changes
+  if (hasChanges) {
+    elements.updateSettingsBtn.classList.remove('hidden');
+  } else {
+    elements.updateSettingsBtn.classList.add('hidden');
+  }
 }
 
 function updateSettings() {
@@ -164,41 +220,26 @@ function updateSettings() {
     systemPrompt: elements.systemPrompt.value,
   };
 
-  // Send update messages for each changed setting
-  if (currentConfig.listenModel !== state.originalConfig.listenModel) {
-    sendMessage({
-      type: 'UpdateListen',
-      provider: {
-        type: 'deepgram',
-        version: 'v1',
-        model: currentConfig.listenModel,
-      },
-    });
-    addSystemMessage('🎧 Updating speech recognition...');
-  }
-
+  // Send update messages only for updateable settings
   if (currentConfig.speakModel !== state.originalConfig.speakModel) {
     sendMessage({
       type: 'UpdateSpeak',
-      provider: {
-        type: 'deepgram',
-        model: currentConfig.speakModel,
+      speak: {
+        provider: {
+          type: 'deepgram',
+          model: currentConfig.speakModel,
+        },
       },
     });
     addSystemMessage('🔊 Updating voice model...');
   }
 
-  if (currentConfig.thinkModel !== state.originalConfig.thinkModel ||
-      currentConfig.systemPrompt !== state.originalConfig.systemPrompt) {
+  if (currentConfig.systemPrompt !== state.originalConfig.systemPrompt) {
     sendMessage({
-      type: 'UpdateThink',
-      provider: {
-        type: 'open_ai',
-        model: currentConfig.thinkModel,
-      },
+      type: 'UpdatePrompt',
       prompt: currentConfig.systemPrompt,
     });
-    addSystemMessage('🧠 Updating LLM configuration...');
+    addSystemMessage('🧠 Updating system prompt...');
   }
 
   // Update original config
@@ -206,6 +247,7 @@ function updateSettings() {
   state.config = { ...currentConfig };
   state.hasUnsavedChanges = false;
   elements.updateSettingsBtn.disabled = true;
+  elements.updateSettingsBtn.classList.add('hidden');
 }
 
 // ============================================================================
@@ -440,15 +482,17 @@ async function onConnected() {
   // Update UI
   elements.connectOverlay.classList.add('hidden');
   elements.disconnectContainer.classList.remove('hidden');
-  elements.updateSettingsBtn.classList.remove('hidden');
-  elements.updateSettingsBtn.disabled = true; // Disabled until changes made
+  elements.updateSettingsBtn.classList.add('hidden'); // Hidden until changes made
+  elements.updateSettingsBtn.disabled = true;
 
   // Enable controls
   elements.messageInput.disabled = false;
   elements.sendBtn.disabled = false;
 
-  // Config inputs stay enabled for live updates
-  // (no need to disable them)
+  // Disable non-updateable config inputs (listen and think cannot be changed mid-conversation)
+  elements.listenModel.disabled = true;
+  elements.thinkModel.disabled = true;
+  // Speak and prompt stay enabled for live updates
 
   // Update status
   updateConnectionStatus(true);
@@ -515,8 +559,9 @@ function disconnect() {
   // Clear chat messages
   elements.chatMessages.innerHTML = '';
 
-  // Config inputs stay enabled
-  // (no need to change their state)
+  // Re-enable all config inputs
+  elements.listenModel.disabled = false;
+  elements.thinkModel.disabled = false;
 
   // Update status
   updateConnectionStatus(false);
@@ -700,8 +745,8 @@ function addChatMessage(sender, text) {
 
   elements.chatMessages.appendChild(messageDiv);
 
-  // Scroll to bottom
-  elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+  // Scroll to bottom smoothly
+  messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 function addSystemMessage(text, type = 'info') {
@@ -717,8 +762,8 @@ function addSystemMessage(text, type = 'info') {
 
   elements.chatMessages.appendChild(messageDiv);
 
-  // Scroll to bottom
-  elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+  // Scroll to bottom smoothly
+  messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 // ============================================================================

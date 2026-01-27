@@ -22,8 +22,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Voice Agent demo using Deepgram">
-  <title>Deepgram Voice Agent</title>
+  <meta name="description" content="Voice Agent demo using Deepgram" id="pageDescription">
+  <title id="pageTitle">Deepgram Voice Agent</title>
 
   <!-- External Dependencies -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
@@ -52,13 +52,15 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       background: var(--dg-almost-black, #050506);
       overflow-y: auto;
+      height: 100%;
     }
 
     .dg-column--main {
       background: var(--dg-background, #0b0b0c);
-      overflow-y: auto;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
+      height: 100%;
     }
 
     .dg-column--sidebar-right {
@@ -66,6 +68,7 @@
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       background: var(--dg-almost-black, #050506);
       overflow-y: auto;
+      height: 100%;
     }
 
     @media (min-width: 768px) {
@@ -101,6 +104,7 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      scroll-behavior: smooth;
     }
 
     .chat-message {
@@ -351,11 +355,13 @@
   <header class="dg-header">
     <div class="dg-header__container">
       <div class="dg-header__logo">
-        <span class="dg-header__logo-text">Deepgram Voice Agent</span>
+        <span class="dg-header__logo-text" id="headerTitle">Deepgram Voice Agent</span>
       </div>
       <nav class="dg-header__nav">
-        <a href="https://developers.deepgram.com/docs/agent" class="dg-btn dg-btn--ghost dg-btn--sm" target="_blank"
-          rel="noopener noreferrer">Docs</a>
+        <a href="https://github.com/deepgram-starters" id="repoLink" class="dg-btn dg-btn--ghost dg-btn--sm" target="_blank"
+          rel="noopener noreferrer">
+          <i class="fa-brands fa-github"></i> GitHub
+        </a>
         <a href="https://console.deepgram.com" class="dg-btn dg-btn--secondary dg-btn--sm" target="_blank"
           rel="noopener noreferrer">Free API Key</a>
       </nav>
@@ -363,8 +369,8 @@
   </header>
 
   <!-- Main Layout -->
-  <div class="dg-columns" style="width: 100%; max-width: 100%; min-height: calc(100vh - 65px);">
-    <div class="dg-columns__wrapper">
+  <div class="dg-columns" style="width: 100%; max-width: 100%; height: calc(100vh - 65px); overflow: hidden;">
+    <div class="dg-columns__wrapper" style="height: 100%;">
 
       <!-- ====================================================================
            LEFT SIDEBAR - Agent Configuration
@@ -374,7 +380,7 @@
           <h3 class="dg-form-label" style="margin-bottom: 1rem;">Configuration</h3>
 
           <form id="configForm">
-            <!-- Listen Model -->
+            <!-- Listen Model (disabled when connected) -->
             <div class="config-section">
               <label class="dg-form-label" for="listenModel">
                 <i class="fa-solid fa-microphone"></i> Listen (STT)
@@ -385,7 +391,21 @@
               </select>
             </div>
 
-            <!-- Speak Model -->
+            <!-- Think Model (disabled when connected) -->
+            <div class="config-section">
+              <label class="dg-form-label" for="thinkModel">
+                <i class="fa-solid fa-brain"></i> Think (LLM)
+              </label>
+              <select id="thinkModel" class="dg-input">
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-4o">GPT-4o</option>
+              </select>
+            </div>
+
+            <!-- Divider -->
+            <hr style="border: none; border-top: 1px solid #2a2a2a; margin: 1.5rem 0;">
+
+            <!-- Speak Model (can update when connected) -->
             <div class="config-section">
               <label class="dg-form-label" for="speakModel">
                 <i class="fa-solid fa-volume-high"></i> Speak (TTS)
@@ -406,18 +426,7 @@
               </select>
             </div>
 
-            <!-- Think Model -->
-            <div class="config-section">
-              <label class="dg-form-label" for="thinkModel">
-                <i class="fa-solid fa-brain"></i> Think (LLM)
-              </label>
-              <select id="thinkModel" class="dg-input">
-                <option value="gpt-4o-mini">GPT-4o Mini</option>
-                <option value="gpt-4o">GPT-4o</option>
-              </select>
-            </div>
-
-            <!-- System Prompt -->
+            <!-- System Prompt (can update when connected) -->
             <div class="config-section">
               <label class="dg-form-label" for="systemPrompt">
                 <i class="fa-solid fa-comment-dots"></i> System Prompt
