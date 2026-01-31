@@ -2,7 +2,6 @@
   "name": "@deepgram/node-voice-agent",
   "version": "1.0.0",
   "description": "A Node.js starter application for Deepgram's Voice Agent API",
-  "type": "module",
   "main": "server.js",
   "packageManager": "pnpm@10.0.0",
   "engines": {
@@ -33,12 +32,12 @@
   "author": "Deepgram DX Team <devrel@deepgram.com> (https://developers.deepgram.com)",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "16.3.1",
+    "dotenv": "17.2.3",
     "express": "5.2.1",
     "http-proxy-middleware": "3.0.5",
     "npm-run-all": "4.1.5",
     "toml": "3.0.0",
-    "ws": "8.17.1"
+    "ws": "8.18.0"
   },
   "devDependencies": {
     "nodemon": "3.1.10"

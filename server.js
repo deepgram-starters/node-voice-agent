@@ -5,21 +5,15 @@
  * Forwards all messages (JSON and binary) bidirectionally between client and Deepgram.
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import express from 'express';
-import { createServer } from 'http';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-import toml from 'toml';
-
-// Load environment variables
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { WebSocketServer, WebSocket } = require('ws');
+const express = require('express');
+const { createServer } = require('http');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const toml = require('toml');
+// Native __dirname support in CommonJS
 
 // Configuration
 const CONFIG = {
@@ -282,5 +276,3 @@ function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-
-export default server;
