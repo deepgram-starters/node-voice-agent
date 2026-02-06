@@ -112,6 +112,7 @@ wss.on('connection', async (clientWs, request) => {
     // Forward all messages from Deepgram to client
     deepgramWs.on('open', () => {
       console.log('✓ Connected to Deepgram Agent API');
+      // Deepgram sends Welcome message automatically - just forward it
     });
 
     deepgramWs.on('message', (data, isBinary) => {
