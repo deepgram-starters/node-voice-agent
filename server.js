@@ -57,17 +57,23 @@ function getErrorMessage(error, fallback) {
 // API key here, so the browser never sees it.
 //
 // DEEPGRAM_BASE_URL (e.g. a staging host like wss://agent.staging.deepgram.com)
-// overrides the default production endpoint. The agent websocket uses
-// `environment.agent`, so we set that plus the REST `base` and `production`.
+// overrides the default production endpoint. The SDK replaces its environment
+// object wholesale rather than merging, so all four URL fields are set: the
+// agent websocket uses `agent`, and `base`, `production`, and `agentRest`
+// cover the REST and speech websocket paths.
 const baseUrl = process.env.DEEPGRAM_BASE_URL;
+const httpBaseUrl = baseUrl
+  ? baseUrl.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://')
+  : undefined;
 const deepgram = new DeepgramClient({
   apiKey: CONFIG.deepgramApiKey,
   ...(baseUrl
     ? {
         environment: {
-          base: baseUrl.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://'),
+          base: httpBaseUrl,
           production: baseUrl,
           agent: baseUrl,
+          agentRest: httpBaseUrl,
         },
       }
     : {}),
